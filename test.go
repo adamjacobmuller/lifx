@@ -144,67 +144,45 @@ func (b *Bulb) setState(bulb *lifx.Bulb) {
 	b.LastState = state
 }
 
+func bulbDiff(left lifx.BulbState, right lifx.BulbState) ([]string, bool) {
+	var changed bool = false
+	var differences []string
+	if left.Hue != right.Hue {
+		changed = true
+		differences = append(differences, fmt.Sprintf("power %d->%d", left.Hue, right.Hue))
+	}
+	if left.Saturation != right.Saturation {
+		changed = true
+		differences = append(differences, fmt.Sprintf("saturation %d->%d", left.Saturation, right.Saturation))
+	}
+	if left.Brightness != right.Brightness {
+		changed = true
+		differences = append(differences, fmt.Sprintf("brightness %d->%d", left.Brightness, right.Brightness))
+	}
+	if left.Kelvin != right.Kelvin {
+		changed = true
+		differences = append(differences, fmt.Sprintf("kelvin %d->%d", left.Kelvin, right.Kelvin))
+	}
+	if left.Dim != right.Dim {
+		changed = true
+		differences = append(differences, fmt.Sprintf("dim %d->%d", left.Dim, right.Dim))
+	}
+	if left.Power != right.Power {
+		changed = true
+		differences = append(differences, fmt.Sprintf("power %d->%d", left.Power, right.Power))
+	}
+	return differences, changed
+}
+
 func (b *Bulb) targetedChange(bulb *lifx.Bulb) ([]string, bool) {
 	state := bulb.GetState()
-	var differences []string
-	var targeted bool
-	targeted = true
-	if b.TargetState.Hue != state.Hue {
-		differences = append(differences, fmt.Sprintf("hue %d->%d", b.LastState.Power, state.Power))
-		targeted = false
-	}
-	if b.TargetState.Saturation != state.Saturation {
-		differences = append(differences, fmt.Sprintf("saturation %d->%d", b.LastState.Saturation, state.Saturation))
-		targeted = false
-	}
-	if b.TargetState.Brightness != state.Brightness {
-		differences = append(differences, fmt.Sprintf("brightness %d->%d", b.LastState.Brightness, state.Brightness))
-		targeted = false
-	}
-	if b.TargetState.Kelvin != state.Kelvin {
-		differences = append(differences, fmt.Sprintf("kelvin %d->%d", b.LastState.Kelvin, state.Kelvin))
-		targeted = false
-	}
-	if b.TargetState.Dim != state.Dim {
-		differences = append(differences, fmt.Sprintf("dim %d->%d", b.LastState.Dim, state.Dim))
-		targeted = false
-	}
-	if b.TargetState.Power != state.Power {
-		differences = append(differences, fmt.Sprintf("power %d->%d", b.LastState.Power, state.Power))
-		targeted = false
-	}
-	return differences, targeted
+	differences, changed := bulbDiff(b.TargetState, state)
+	return differences, !changed
 }
 
 func (b *Bulb) changed(bulb *lifx.Bulb) ([]string, bool) {
 	state := bulb.GetState()
-	var changes []string
-	var changed bool
-	if b.LastState.Hue != state.Hue {
-		changes = append(changes, fmt.Sprintf("hue %d->%d", b.LastState.Power, state.Power))
-		changed = true
-	}
-	if b.LastState.Saturation != state.Saturation {
-		changes = append(changes, fmt.Sprintf("saturation %d->%d", b.LastState.Saturation, state.Saturation))
-		changed = true
-	}
-	if b.LastState.Brightness != state.Brightness {
-		changes = append(changes, fmt.Sprintf("brightness %d->%d", b.LastState.Brightness, state.Brightness))
-		changed = true
-	}
-	if b.LastState.Kelvin != state.Kelvin {
-		changes = append(changes, fmt.Sprintf("kelvin %d->%d", b.LastState.Kelvin, state.Kelvin))
-		changed = true
-	}
-	if b.LastState.Dim != state.Dim {
-		changed = true
-		changes = append(changes, fmt.Sprintf("dim %d->%d", b.LastState.Dim, state.Dim))
-	}
-	if b.LastState.Power != state.Power {
-		changed = true
-		changes = append(changes, fmt.Sprintf("power %d->%d", b.LastState.Power, state.Power))
-	}
-	return changes, changed
+	return bulbDiff(b.LastState, state)
 }
 
 func (a *App) SetState(bulb *lifx.Bulb) {
