@@ -91,14 +91,14 @@ func (b *Bulb) adjustState() {
 	case 12:
 		fallthrough
 	case 13: // 1PM
-		brightness = 32768
+		brightness = 16384
 		kelvin = 5000
 	case 14: // 2PM
 		fallthrough
 	case 15: // 3PM
 		fallthrough
 	case 16: // 4PM
-		brightness = 32768
+		brightness = 16384
 		kelvin = 4000
 	case 17: // 5PM
 		fallthrough
@@ -136,7 +136,7 @@ func (b *Bulb) adjustState() {
 			"name":               b.Name,
 		}).Info("initiating LightColor change")
 		b.Controlled = false
-		b.ControlAfter = time.Now().Add(time.Second * 30)
+		b.ControlAfter = time.Now().Add(time.Second * 15)
 		b.TargetState.Kelvin = kelvin
 		b.TargetState.Brightness = brightness
 		b.client.LightColour(b.bulb, hue, sat, brightness, kelvin, timing)
@@ -352,6 +352,10 @@ func NewApp(c *lifx.Client) (*App, error) {
 }
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
+
 	c := lifx.NewClient()
 
 	err := c.StartDiscovery()
