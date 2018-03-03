@@ -11,18 +11,18 @@ import (
 )
 
 type Bulb struct {
-	client            *lifx.Client
-	bulb              *lifx.Bulb
-	app               *App
-	Name              string
-	Address           string
-	Online            bool
-	LastChange        time.Time
-	LastStateUpdate   time.Time
-	LastState         lifx.BulbState
-	Controlled        bool
-	UncontrolledSince time.Time
-	TargetState       lifx.BulbState
+	client          *lifx.Client
+	bulb            *lifx.Bulb
+	app             *App
+	Name            string
+	Address         string
+	Online          bool
+	LastChange      time.Time
+	LastStateUpdate time.Time
+	LastState       lifx.BulbState
+	Controlled      bool
+	ControlAfter    time.Time
+	TargetState     lifx.BulbState
 }
 
 // {Hue:0 Saturation:0 Brightness:16449 Kelvin:2500 Dim:0 Power:65535 Visible:true}
@@ -36,7 +36,7 @@ func (a *App) watchOffline() {
 	for _ = range time.Tick(time.Second) {
 		for _, bulb := range a.bulbs {
 			since := time.Since(bulb.bulb.LastSeen())
-			if since > time.Second*20 {
+			if since > time.Hour {
 				if bulb.Online {
 					bulb.Online = false
 					log.WithFields(log.Fields{
@@ -72,7 +72,7 @@ func (b *Bulb) adjustState() {
 	case 3:
 		fallthrough
 	case 4:
-		brightness = 2000
+		brightness = 2048
 		kelvin = 2500
 	case 5:
 		fallthrough
@@ -91,7 +91,8 @@ func (b *Bulb) adjustState() {
 	case 12:
 		fallthrough
 	case 13: // 1PM
-		fallthrough
+		brightness = 32768
+		kelvin = 5000
 	case 14: // 2PM
 		fallthrough
 	case 15: // 3PM
@@ -102,7 +103,8 @@ func (b *Bulb) adjustState() {
 	case 17: // 5PM
 		fallthrough
 	case 18: // 6PM
-		fallthrough
+		brightness = 16384
+		kelvin = 3750
 	case 19: // 7PM
 		fallthrough
 	case 20: // 8PM
@@ -111,10 +113,11 @@ func (b *Bulb) adjustState() {
 	case 21: // 9PM
 		fallthrough
 	case 22: // 10PM
-		fallthrough
+		brightness = 8192
+		kelvin = 3000
 	case 23: // 11PM
 		brightness = 4096
-		kelvin = 3000
+		kelvin = 2500
 	}
 	state := b.bulb.GetState()
 	var update bool = false
@@ -126,12 +129,14 @@ func (b *Bulb) adjustState() {
 	}
 	if update {
 		log.WithFields(log.Fields{
-			"brightness": brightness,
-			"kelvin":     kelvin,
-			"name":       b.Name,
+			"current-brightness": state.Brightness,
+			"target-brightness":  brightness,
+			"current-kelvin":     state.Kelvin,
+			"target-kelvin":      kelvin,
+			"name":               b.Name,
 		}).Info("initiating LightColor change")
 		b.Controlled = false
-		b.UncontrolledSince = time.Now()
+		b.ControlAfter = time.Now().Add(time.Second * 30)
 		b.TargetState.Kelvin = kelvin
 		b.TargetState.Brightness = brightness
 		b.client.LightColour(b.bulb, hue, sat, brightness, kelvin, timing)
@@ -190,13 +195,12 @@ func (a *App) SetState(bulb *lifx.Bulb) {
 	eb, ok := a.bulbs[addr]
 	if !ok {
 		b := &Bulb{
-			bulb:              bulb,
-			app:               a,
-			client:            a.client,
-			Name:              bulb.GetLabel(),
-			Address:           addr,
-			Controlled:        true,
-			UncontrolledSince: time.Now(),
+			bulb:       bulb,
+			app:        a,
+			client:     a.client,
+			Name:       bulb.GetLabel(),
+			Address:    addr,
+			Controlled: true,
 		}
 		b.setState(bulb)
 		b.TargetState = bulb.GetState()
@@ -228,7 +232,7 @@ func (a *App) SetState(bulb *lifx.Bulb) {
 						"targetMismatch": targetMismatch,
 					}).Info("target mismatched, relinquishing control")
 					eb.Controlled = false
-					eb.UncontrolledSince = time.Now()
+					eb.ControlAfter = time.Now().Add(time.Hour)
 				}
 			} else {
 				_, targeted := eb.targetedChange(bulb)
@@ -310,11 +314,11 @@ func (a *App) regainControl() {
 			if bulb.Controlled {
 				continue
 			}
-			if bulb.UncontrolledSince.Add(time.Second * 30).Before(time.Now()) {
+			if bulb.ControlAfter.Before(time.Now()) {
 				log.WithFields(log.Fields{
 					"address": bulb.Address,
 					"name":    bulb.Name,
-					"after":   time.Since(bulb.UncontrolledSince),
+					"after":   time.Since(bulb.ControlAfter),
 				}).Info("regaining control of bulb")
 				bulb.Controlled = true
 				bulb.adjustState()
