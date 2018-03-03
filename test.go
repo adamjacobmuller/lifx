@@ -149,7 +149,7 @@ func bulbDiff(left lifx.BulbState, right lifx.BulbState) ([]string, bool) {
 	var differences []string
 	if left.Hue != right.Hue {
 		changed = true
-		differences = append(differences, fmt.Sprintf("power %d->%d", left.Hue, right.Hue))
+		differences = append(differences, fmt.Sprintf("hue %d->%d", left.Hue, right.Hue))
 	}
 	if left.Saturation != right.Saturation {
 		changed = true
