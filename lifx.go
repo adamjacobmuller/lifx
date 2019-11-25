@@ -7,7 +7,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/wolfeidau/lifx"
+	"gitlab.adam.gs/home/lifx/lib"
 )
 
 type Bulb struct {
