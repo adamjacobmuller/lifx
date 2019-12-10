@@ -455,7 +455,7 @@ func (c *Client) processCommandEvent(cmde *cmdEvent) {
 		c.updateBulbPowerState(cmd.Header.TargetMacAddress, cmd.Payload.OnOff)
 
 	case *ambientStateCommand:
-		//log.Printf("Recieved lux: %f", cmd.Payload.Lux)
+		log.Printf("Recieved lux: %f", cmd.Payload.Lux)
 
 		c.updateAmbientLightState(cmd.Header.TargetMacAddress, cmd.Payload.Lux)
 
@@ -540,8 +540,8 @@ func (c *Client) addBulb(bulb *Bulb) {
 		// log.Printf("Added bulb %x state %v", bulb.LifxAddress, bulb.bulbState)
 
 		// notify subscribers
-		go c.notifySubsBulbNew(bulb)
 	}
+	go c.notifySubsBulbNew(bulb)
 	for _, lbulb := range c.bulbs {
 		if bulb.LifxAddress == lbulb.LifxAddress {
 			lbulb.update(bulb)
