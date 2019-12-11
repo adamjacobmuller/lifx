@@ -455,7 +455,7 @@ func (c *Client) processCommandEvent(cmde *cmdEvent) {
 		c.updateBulbPowerState(cmd.Header.TargetMacAddress, cmd.Payload.OnOff)
 
 	case *ambientStateCommand:
-		log.Printf("Recieved lux: %f", cmd.Payload.Lux)
+		//log.Printf("Recieved lux: %f", cmd.Payload.Lux)
 
 		c.updateAmbientLightState(cmd.Header.TargetMacAddress, cmd.Payload.Lux)
 
