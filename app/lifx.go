@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gocraft/web"
 	log "github.com/sirupsen/logrus"
 	"gitlab.adam.gs/home/lifx/lib"
 )
@@ -108,8 +109,12 @@ func (b *Bulb) adjustState() {
 	case 19: // 7PM
 		fallthrough
 	case 20: // 8PM
-		brightness = 8192
 		kelvin = 3500
+		if b.Address == "d073d522a994" || b.Address == "d073d5228b34" {
+			brightness = 16384
+		} else {
+			brightness = 8192
+		}
 	case 21: // 9PM
 		fallthrough
 	case 22: // 10PM
@@ -299,15 +304,6 @@ func (a *App) BulbListJSON() []BulbJSON {
 	return v
 }
 
-func (a *App) Handle(w http.ResponseWriter, r *http.Request) {
-	d, err := json.Marshal(a.BulbListJSON())
-	if err != nil {
-		panic(err)
-	}
-	w.Header().Add("content-type", "application/json")
-	w.Write(d)
-}
-
 func (a *App) regainControl() {
 	for _ = range time.Tick(time.Second) {
 		for _, bulb := range a.BulbList() {
@@ -327,6 +323,13 @@ func (a *App) regainControl() {
 	}
 }
 
+func (a *App) watchAmbient() {
+	for _ = range time.Tick(time.Second * 30) {
+		for _, bulb := range a.BulbList() {
+			a.client.GetAmbientLight(bulb.bulb)
+		}
+	}
+}
 func (a *App) controlState() {
 	for _ = range time.Tick(time.Second) {
 		for _, bulb := range a.BulbList() {
@@ -338,16 +341,39 @@ func (a *App) controlState() {
 	}
 }
 
+type Context struct {
+	App *App
+}
+
+func (c *Context) ListDevices(rw web.ResponseWriter, req *web.Request) {
+	d, err := json.Marshal(c.App.BulbListJSON())
+	if err != nil {
+		panic(err)
+	}
+	rw.Header().Add("content-type", "application/json")
+	rw.Write(d)
+}
+
 func NewApp(c *lifx.Client) (*App, error) {
 	a := App{
 		bulbs:  make(map[string]*Bulb),
 		client: c,
 	}
-	http.HandleFunc("/", a.Handle)
-	go http.ListenAndServe(":8089", nil)
-	//go a.watchOffline()
+
+	router := web.New(Context{})
+
+	router.Middleware(func(ctx *Context, rw web.ResponseWriter,
+		req *web.Request, next web.NextMiddlewareFunc) {
+		ctx.App = &a
+		next(rw, req)
+	})
+
+	router.Get("/bulbs", (*Context).ListDevices)
+
+	go http.ListenAndServe(":8089", router)
 	go a.regainControl()
 	go a.controlState()
+	go a.watchAmbient()
 	return &a, nil
 }
 
@@ -380,7 +406,7 @@ func main() {
 			//log.Printf("Bulb Update %+v", event.GetState())
 			a.SetState(event)
 		case *lifx.LightSensorState:
-			//log.Printf("Light Sensor Update %s %f", event.GetLifxAddress(), event.Lux)
+			log.Printf("Light Sensor Update %s %f", event.GetLifxAddress(), event.Lux)
 		default:
 			log.Printf("Event %+v", event)
 		}
