@@ -109,6 +109,44 @@ func (a *App) BulbList() []*Bulb {
 	return l
 }
 
+func (a *App) GetBulbs() []*Bulb {
+	var l []*Bulb
+	for _, bulb := range a.bulbs {
+		l = append(l, bulb)
+	}
+	return l
+}
+
+func (a *App) GetLocationBulbs(location string) []*Bulb {
+	var bl []*Bulb
+	for _, bulb := range a.bulbs {
+		if bulb.Location == location {
+			bl = append(bl, bulb)
+		}
+	}
+	return bl
+}
+
+func (a *App) GetGroupBulbs(group string) []*Bulb {
+	var bl []*Bulb
+	for _, bulb := range a.bulbs {
+		if bulb.Group == group {
+			bl = append(bl, bulb)
+		}
+	}
+	return bl
+}
+
+func (a *App) GetLocationGroupBulbs(location string, group string) []*Bulb {
+	var bl []*Bulb
+	for _, bulb := range a.bulbs {
+		if bulb.Location == location && bulb.Group == group {
+			bl = append(bl, bulb)
+		}
+	}
+	return bl
+}
+
 func (a *App) GetBulb(address string) *Bulb {
 	for _, bulb := range a.bulbs {
 		if bulb.Address == address {
@@ -163,44 +201,7 @@ func NewApp(c *lifx.Client) (*App, error) {
 
 	go a.regainControl()
 	go a.controlState()
-	go a.watchAmbient()
+	//go a.watchAmbient()
 	RunWebServer(&a)
 	return &a, nil
-}
-
-func main() {
-	log.SetFormatter(&log.TextFormatter{
-		FullTimestamp: true,
-	})
-
-	c := lifx.NewClient()
-
-	err := c.StartDiscovery()
-	if err != nil {
-		panic(err)
-	}
-
-	a, err := NewApp(c)
-	if err != nil {
-		panic(err)
-	}
-
-	sub := c.Subscribe()
-
-	for {
-		event := <-sub.Events
-
-		switch event := event.(type) {
-		case *lifx.Gateway:
-			//log.Printf("Gateway Update %+v", event)
-		case *lifx.Bulb:
-			//log.Printf("Bulb Update %+v", event.GetState())
-			a.SetState(event)
-		case *lifx.LightSensorState:
-			log.Printf("Light Sensor Update %s %f", event.GetLifxAddress(), event.Lux)
-		default:
-			log.Printf("Event %+v", event)
-		}
-
-	}
 }

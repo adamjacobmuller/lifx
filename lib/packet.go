@@ -35,6 +35,12 @@ const (
 	PktGetTagLabels uint16 = 0x001d
 	PktSetTagLabels uint16 = 0x001e
 	PktTagLabels    uint16 = 0x001f
+
+	PktGetLocation uint16 = 48
+	PktLocation    uint16 = 50
+
+	PktGetGroup uint16 = 51
+	PktGroup    uint16 = 53
 )
 
 type packetHeader struct {

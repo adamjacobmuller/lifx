@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	//"log"
+	//"github.com/davecgh/go-spew/spew"
 )
 
 type command interface {
@@ -34,6 +36,10 @@ func decodeCommand(buf []byte) (command, error) {
 		return decodeTagsCommand(ph, buf[HeaderLen:])
 	case PktTagLabels:
 		return decodeTagLabelsCommand(ph, buf[HeaderLen:])
+	case PktGroup:
+		return decodeGroupCommand(ph, buf[HeaderLen:])
+	case PktLocation:
+		return decodeLocationCommand(ph, buf[HeaderLen:])
 	}
 
 	return nil, fmt.Errorf("Unrecognised type 0x%x", ph.PacketType)
@@ -362,6 +368,106 @@ type tagLabelsCommand struct {
 
 func decodeTagLabelsCommand(ph *packetHeader, payload []byte) (*tagLabelsCommand, error) {
 	cmd := &tagLabelsCommand{}
+	cmd.Header = ph
+
+	// decode payload
+	//log.Printf("payload len : %d", len(payload))
+	decodePayload(payload, &cmd.Payload)
+
+	//log.Printf("Command: \n %s", spew.Sdump(cmd))
+
+	return cmd, nil
+}
+
+// getLocationCommand
+type getLocationCommand struct {
+	commandPacket
+}
+
+func newGetLocationCommandFromBulb(lifxAddress [6]byte) *getLocationCommand {
+	ph := newPacketHeader(PktGetLocation)
+	ph.Protocol = 0x1400
+	ph.TargetMacAddress = lifxAddress
+
+	cmd := &getLocationCommand{}
+	cmd.Header = ph
+	return cmd
+}
+
+func newGetLocationCommand(site [6]byte, lifxAddress [6]byte) *getLocationCommand {
+	ph := newPacketHeader(PktGetLocation)
+	ph.Protocol = 0x1400
+	ph.Site = site
+	ph.TargetMacAddress = lifxAddress
+
+	cmd := &getLocationCommand{}
+	cmd.Header = ph
+	return cmd
+}
+
+// groupCommand
+type locationCommand struct {
+	commandPacket
+	Payload struct {
+		Location [16]byte
+		Label    [32]byte
+		Updated  int64
+	}
+}
+
+func decodeLocationCommand(ph *packetHeader, payload []byte) (*locationCommand, error) {
+	cmd := &locationCommand{}
+	cmd.Header = ph
+
+	// decode payload
+	//log.Printf("payload len : %d", len(payload))
+	decodePayload(payload, &cmd.Payload)
+
+	//log.Printf("Command: \n %s", spew.Sdump(cmd))
+
+	return cmd, nil
+}
+
+// END
+
+// getGroupCommand
+type getGroupCommand struct {
+	commandPacket
+}
+
+func newGetGroupCommandFromBulb(lifxAddress [6]byte) *getGroupCommand {
+	ph := newPacketHeader(PktGetGroup)
+	ph.Protocol = 0x1400
+	ph.TargetMacAddress = lifxAddress
+
+	cmd := &getGroupCommand{}
+	cmd.Header = ph
+	return cmd
+}
+
+func newGetGroupCommand(site [6]byte, lifxAddress [6]byte) *getGroupCommand {
+	ph := newPacketHeader(PktGetGroup)
+	ph.Protocol = 0x1400
+	ph.Site = site
+	ph.TargetMacAddress = lifxAddress
+
+	cmd := &getGroupCommand{}
+	cmd.Header = ph
+	return cmd
+}
+
+// groupCommand
+type groupCommand struct {
+	commandPacket
+	Payload struct {
+		Group   [16]byte
+		Label   [32]byte
+		Updated int64
+	}
+}
+
+func decodeGroupCommand(ph *packetHeader, payload []byte) (*groupCommand, error) {
+	cmd := &groupCommand{}
 	cmd.Header = ph
 
 	// decode payload

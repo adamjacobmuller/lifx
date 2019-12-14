@@ -13,6 +13,9 @@ import (
 type BulbJSON struct {
 	Name          string    `json:"name"`
 	Address       string    `json:"address"`
+	Lux           float32   `json:"lux,omitempty"`
+	Location      string    `json:"location,omitempty"`
+	Group         string    `json:"group,omitempty"`
 	LastSeen      time.Time `json:"last-seen"`
 	LastSeenSince string    `json:"last-seen-since"`
 	Hue           int       `json:"hue"`
@@ -21,8 +24,6 @@ type BulbJSON struct {
 	Kelvin        int       `json:"kelvin"`
 	Dim           int       `json:"dim"`
 	Power         int       `json:"power"`
-
-	//Luminosity    int       `json:"luminosity"`
 }
 
 type Context struct {
@@ -39,6 +40,8 @@ func RunWebServer(a *App) {
 	})
 
 	router.Get("/bulbs", (*Context).ListBulbs)
+	router.Get("/bulbs/:*", (*Context).ListBulbs)
+	router.Post("/bulbs/:*", (*Context).UpdateBulbs)
 	router.Get("/bulb/:bulb_id", (*Context).GetBulb)
 	router.Post("/bulb/:bulb_id", (*Context).UpdateBulb)
 
@@ -92,6 +95,47 @@ func ParseUpdateBulbRequest(ur *UpdateBulbRequest) (*time.Time, *time.Duration, 
 	return until, duration, brightness, kelvin, nil
 }
 
+func (c *Context) UpdateBulbs(rw web.ResponseWriter, req *web.Request) {
+	bulbs, err := c.filter(req.PathParams["*"])
+	if err != nil {
+		http.Error(rw, err.Error(), 400)
+	}
+
+	ur := &UpdateBulbRequest{}
+	err = unmarshal_json_request(rw, req, ur)
+	if err != nil {
+		panic(err)
+	}
+
+	until, duration, brightness, kelvin, err := ParseUpdateBulbRequest(ur)
+	if err != nil {
+		http.Error(rw, err.Error(), 400)
+	}
+
+	for _, bulb := range bulbs {
+		le := log.WithFields(log.Fields{
+			"address": bulb.Address,
+			"name":    bulb.Name,
+		})
+		bulb.ManualStateUntil = *until
+		le = le.WithField("until", ur.Until)
+		if duration != nil {
+			le = le.WithField("duration", duration)
+		}
+		bulb.ManualStateBrightness = nil
+		bulb.ManualStateKelvin = nil
+		if brightness != nil {
+			bulb.ManualStateBrightness = brightness
+			le = le.WithField("brightness", brightness)
+		}
+		if kelvin != nil {
+			bulb.ManualStateKelvin = kelvin
+			le = le.WithField("kelvin", kelvin)
+		}
+		le.Info("setting bulb to manual control")
+	}
+}
+
 func (c *Context) UpdateBulb(rw web.ResponseWriter, req *web.Request) {
 	ur := &UpdateBulbRequest{}
 	err := unmarshal_json_request(rw, req, ur)
@@ -138,6 +182,9 @@ func (c *Context) GetBulb(rw web.ResponseWriter, req *web.Request) {
 			v := &BulbJSON{
 				Name:          bulb.Name,
 				Address:       bulb.Address,
+				Location:      bulb.Location,
+				Group:         bulb.Group,
+				Lux:           bulb.Lux,
 				LastSeen:      bulb.bulb.LastSeen(),
 				LastSeenSince: time.Since(bulb.bulb.LastSeen()).String(),
 				Hue:           int(state.Hue),
@@ -166,6 +213,9 @@ func (c *Context) ListBulbs(rw web.ResponseWriter, req *web.Request) {
 		v = append(v, &BulbJSON{
 			Name:          bulb.Name,
 			Address:       bulb.Address,
+			Location:      bulb.Location,
+			Group:         bulb.Group,
+			Lux:           bulb.Lux,
 			LastSeen:      bulb.bulb.LastSeen(),
 			LastSeenSince: time.Since(bulb.bulb.LastSeen()).String(),
 			Hue:           int(state.Hue),

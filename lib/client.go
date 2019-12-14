@@ -34,6 +34,22 @@ type Bulb struct {
 
 	lastLightState *lightStateCommand
 	lastSeen       time.Time
+
+	location string
+	group    string
+	lux      float32
+}
+
+func (b *Bulb) GetLocation() string {
+	return b.location
+}
+
+func (b *Bulb) GetGroup() string {
+	return b.group
+}
+
+func (b *Bulb) GetLux() float32 {
+	return b.lux
 }
 
 func (b *Bulb) LastSeen() time.Time {
@@ -322,6 +338,20 @@ func (c *Client) GetBulbState(bulb *Bulb) error {
 	return c.sendTo(bulb, cmd)
 }
 
+// GetLocation send a notification to the bulb to emit the current location
+func (c *Client) GetLocation(bulb *Bulb) error {
+	//log.Printf("GetLocation sent to %s", bulb.GetLifxAddress())
+	cmd := newGetLocationCommandFromBulb(bulb.LifxAddress)
+	return c.sendTo(bulb, cmd)
+}
+
+// GetGroup send a notification to the bulb to emit the current group
+func (c *Client) GetGroup(bulb *Bulb) error {
+	//log.Printf("GetGroup sent to %s", bulb.GetLifxAddress())
+	cmd := newGetGroupCommandFromBulb(bulb.LifxAddress)
+	return c.sendTo(bulb, cmd)
+}
+
 // GetAmbientLight send a notification to the bulb to emit the current ambient light
 func (c *Client) GetAmbientLight(bulb *Bulb) error {
 	//log.Printf("GetAmbientLight sent to %s", bulb.GetLifxAddress())
@@ -444,19 +474,26 @@ func (c *Client) processCommandEvent(cmde *cmdEvent) {
 
 	case *lightStateCommand:
 		// found a bulb
-		bulb := newBulb(cmd.Header.TargetMacAddress)
+		bulb := c.GetBulb(cmd.Header.TargetMacAddress)
 		bulb.lastLightState = cmd
 
 		bulb.bulbState = newBulbState(cmd.Payload.Hue, cmd.Payload.Saturation, cmd.Payload.Brightness, cmd.Payload.Kelvin, cmd.Payload.Dim, cmd.Payload.Power, true)
 
+		c.GetGroup(bulb)
+		c.GetLocation(bulb)
+		c.GetAmbientLight(bulb)
 		c.addBulb(bulb)
 
 	case *powerStateCommand:
 		c.updateBulbPowerState(cmd.Header.TargetMacAddress, cmd.Payload.OnOff)
 
-	case *ambientStateCommand:
-		//log.Printf("Recieved lux: %f", cmd.Payload.Lux)
+	case *locationCommand:
+		c.updateLocation(cmd.Header.TargetMacAddress, cmd.Payload.Label)
 
+	case *groupCommand:
+		c.updateGroup(cmd.Header.TargetMacAddress, cmd.Payload.Label)
+
+	case *ambientStateCommand:
 		c.updateAmbientLightState(cmd.Header.TargetMacAddress, cmd.Payload.Lux)
 
 	case *tagsCommand:
@@ -466,7 +503,7 @@ func (c *Client) processCommandEvent(cmde *cmdEvent) {
 		c.updateTagLabels(cmd.Payload.Tags, cmd.Payload.Label)
 
 	default:
-		//log.Printf("Recieved command: %s", reflect.TypeOf(cmd))
+		log.Printf("Recieved command: %s", reflect.TypeOf(cmd))
 	}
 }
 
@@ -562,12 +599,29 @@ func (c *Client) updateBulbPowerState(lifxAddress [6]byte, onoff uint16) {
 	}
 }
 
-// as these readings are independent of the bulb state i am emitting them seperately
-func (c *Client) updateAmbientLightState(lifxAddress [6]byte, lux float32) {
-	lightSensorState := &LightSensorState{lifxAddress, lux}
+func (c *Client) GetBulb(lifxAddress [6]byte) *Bulb {
+	for _, b := range c.bulbs {
+		if lifxAddress == b.LifxAddress {
+			return b
+		}
+	}
+	return newBulb(lifxAddress)
 
-	// notify subscribers
-	go c.notifySubsSensorReading(lightSensorState)
+}
+
+func (c *Client) updateLocation(lifxAddress [6]byte, location [32]byte) {
+	b := c.GetBulb(lifxAddress)
+	b.location = string(bytes.Trim(location[:], "\x00"))
+}
+
+func (c *Client) updateGroup(lifxAddress [6]byte, group [32]byte) {
+	b := c.GetBulb(lifxAddress)
+	b.group = string(bytes.Trim(group[:], "\x00"))
+}
+
+func (c *Client) updateAmbientLightState(lifxAddress [6]byte, lux float32) {
+	b := c.GetBulb(lifxAddress)
+	b.lux = lux
 }
 
 // we've received a new tagsCommand packet, so let's update

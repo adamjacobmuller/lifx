@@ -21,6 +21,9 @@ type Bulb struct {
 	Controlled      bool
 	ControlAfter    time.Time
 	TargetState     lifx.BulbState
+	Lux             float32
+	Location        string
+	Group           string
 
 	ManualStateKelvin     *uint16
 	ManualStateBrightness *uint16
@@ -180,6 +183,9 @@ func (b *Bulb) setState(bulb *lifx.Bulb) {
 	state := bulb.GetState()
 	b.LastStateUpdate = time.Now()
 	b.LastState = state
+	b.Lux = bulb.GetLux()
+	b.Location = bulb.GetLocation()
+	b.Group = bulb.GetGroup()
 }
 
 func (b *Bulb) targetedChange(bulb *lifx.Bulb) ([]string, bool) {
