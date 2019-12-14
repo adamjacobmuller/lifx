@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -52,6 +53,45 @@ type UpdateBulbRequest struct {
 	Kelvin     *int       `json:"kelvin,omitempty"`
 }
 
+func ParseUpdateBulbRequest(ur *UpdateBulbRequest) (*time.Time, *time.Duration, *uint16, *uint16, error) {
+	if ur.Until != nil && ur.Duration != nil {
+		return nil, nil, nil, nil, errors.New("don't set both until and duration")
+	}
+	var until *time.Time
+	var duration *time.Duration
+	var brightness *uint16
+	var kelvin *uint16
+
+	if ur.Until != nil {
+		until = ur.Until
+	} else if ur.Duration != nil {
+		dv, err := time.ParseDuration(*ur.Duration)
+		if err != nil {
+			return nil, nil, nil, nil, errors.New("can't parse duration")
+		}
+		duration = &dv
+		uv := time.Now().Add(dv)
+		until = &uv
+	} else {
+		return nil, nil, nil, nil, errors.New("must set until or duration")
+	}
+	if ur.Brightness == nil && ur.Kelvin == nil {
+		return nil, nil, nil, nil, errors.New("must set one of brightness or kelvin")
+	}
+
+	if ur.Brightness != nil {
+		bv := uint16(*ur.Brightness)
+		brightness = &bv
+	}
+
+	if ur.Kelvin != nil {
+		kv := uint16(*ur.Kelvin)
+		kelvin = &kv
+	}
+
+	return until, duration, brightness, kelvin, nil
+}
+
 func (c *Context) UpdateBulb(rw web.ResponseWriter, req *web.Request) {
 	ur := &UpdateBulbRequest{}
 	err := unmarshal_json_request(rw, req, ur)
@@ -59,34 +99,9 @@ func (c *Context) UpdateBulb(rw web.ResponseWriter, req *web.Request) {
 		panic(err)
 	}
 
-	if ur.Until == nil && ur.Duration == nil {
-		http.Error(rw, "must set until or duration", 400)
-		return
-	}
-	if ur.Until != nil && ur.Duration != nil {
-		http.Error(rw, "don't set both until and duration", 400)
-		return
-	}
-	var until *time.Time
-	var duration *time.Duration
-	if ur.Until != nil {
-		until = ur.Until
-	} else if ur.Duration != nil {
-		dv, err := time.ParseDuration(*ur.Duration)
-		if err != nil {
-			http.Error(rw, "can't parse duration", 400)
-			return
-		}
-		duration = &dv
-		uv := time.Now().Add(dv)
-		until = &uv
-	} else {
-		http.Error(rw, "must set until or duration", 400)
-		return
-	}
-	if ur.Brightness == nil && ur.Kelvin == nil {
-		http.Error(rw, "must set one of brightness or duration", 400)
-		return
+	until, duration, brightness, kelvin, err := ParseUpdateBulbRequest(ur)
+	if err != nil {
+		http.Error(rw, err.Error(), 400)
 	}
 
 	bulb := c.App.GetBulb(req.PathParams["bulb_id"])
@@ -105,15 +120,13 @@ func (c *Context) UpdateBulb(rw web.ResponseWriter, req *web.Request) {
 	}
 	bulb.ManualStateBrightness = nil
 	bulb.ManualStateKelvin = nil
-	if ur.Brightness != nil {
-		brightness := uint16(*ur.Brightness)
-		bulb.ManualStateBrightness = &brightness
-		le = le.WithField("brightness", ur.Brightness)
+	if brightness != nil {
+		bulb.ManualStateBrightness = brightness
+		le = le.WithField("brightness", brightness)
 	}
-	if ur.Kelvin != nil {
-		kelvin := uint16(*ur.Kelvin)
-		bulb.ManualStateKelvin = &kelvin
-		le = le.WithField("kelvin", ur.Kelvin)
+	if kelvin != nil {
+		bulb.ManualStateKelvin = kelvin
+		le = le.WithField("kelvin", kelvin)
 	}
 	le.Info("setting bulb to manual control")
 }

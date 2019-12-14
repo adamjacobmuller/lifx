@@ -115,7 +115,6 @@ func (a *App) GetBulb(address string) *Bulb {
 			return bulb
 		}
 	}
-
 	return nil
 }
 
