@@ -1,0 +1,104 @@
+{
+    "groups": [
+        "Kitchen",
+        "Downstairs Bathroom"
+    ],
+    "hours": {
+        "0": {
+            "brightness": 2048,
+            "kelvin": 2500
+        },
+        "1": {
+            "brightness": 2048,
+            "kelvin": 2500
+        },
+        "2": {
+            "brightness": 2048,
+            "kelvin": 2500
+        },
+        "3": {
+            "brightness": 2048,
+            "kelvin": 2500
+        },
+        "4": {
+            "brightness": 2048,
+            "kelvin": 2500
+        },
+        "5": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "6": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "7": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "8": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "9": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "10": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "11": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "12": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "13": {
+            "brightness": 32769,
+            "kelvin": 5000
+        },
+        "14": {
+            "brightness": 32769,
+            "kelvin": 4000
+        },
+        "15": {
+            "brightness": 32769,
+            "kelvin": 4000
+        },
+        "16": {
+            "brightness": 32769,
+            "kelvin": 4000
+        },
+        "17": {
+            "brightness": 32769,
+            "kelvin": 3750
+        },
+        "18": {
+            "brightness": 32769,
+            "kelvin": 3750
+        },
+        "19": {
+            "brightness": 32769,
+            "kelvin": 3500
+        },
+        "20": {
+            "brightness": 32769,
+            "kelvin": 3500
+        },
+        "21": {
+            "brightness": 16384,
+            "kelvin": 3000
+        },
+        "22": {
+            "brightness": 8192,
+            "kelvin": 3000
+        },
+        "23": {
+            "brightness": 4096,
+            "kelvin": 2500
+        }
+    }
+}
