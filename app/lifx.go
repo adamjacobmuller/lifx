@@ -10,6 +10,7 @@ import (
 type App struct {
 	client *lifx.Client
 	bulbs  map[string]*Bulb
+	curves *Curves
 }
 
 func (a *App) watchOffline() {
@@ -201,6 +202,7 @@ func NewApp(c *lifx.Client) (*App, error) {
 
 	go a.regainControl()
 	go a.controlState()
+	go a.loadCurves()
 	//go a.watchAmbient()
 	RunWebServer(&a)
 	return &a, nil
