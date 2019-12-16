@@ -67,75 +67,33 @@ func (b *Bulb) adjustState() {
 	var kelvin uint16
 	var timing uint32
 	timing = 10000
-	brightness = 2500
-	kelvin = 2500
-	hour := time.Now().Hour()
-	switch hour {
-	case 0:
-		fallthrough
-	case 1:
-		fallthrough
-	case 2:
-		fallthrough
-	case 3:
-		fallthrough
-	case 4:
-		brightness = 2048
-		kelvin = 2500
-	case 5:
-		fallthrough
-	case 6:
-		fallthrough
-	case 7:
-		fallthrough
-	case 8:
-		fallthrough
-	case 9:
-		fallthrough
-	case 10:
-		fallthrough
-	case 11:
-		fallthrough
-	case 12:
-		fallthrough
-	case 13: // 1PM
-		brightness = 16384
-		kelvin = 5000
-	case 14: // 2PM
-		fallthrough
-	case 15: // 3PM
-		fallthrough
-	case 16: // 4PM
-		brightness = 16384
-		kelvin = 4000
-	case 17: // 5PM
-		fallthrough
-	case 18: // 6PM
-		brightness = 16384
-		kelvin = 3750
-	case 19: // 7PM
-		fallthrough
-	case 20: // 8PM
-		kelvin = 3500
-		if b.Address == "d073d522a994" || b.Address == "d073d5228b34" {
-			brightness = 16384
-		} else {
-			brightness = 8192
-		}
-	case 21: // 9PM
-		fallthrough
-	case 22: // 10PM
-		brightness = 8192
-		kelvin = 3000
-	case 23: // 11PM
-		brightness = 4096
-		kelvin = 2500
+	brightness = 65535
+	kelvin = 4000
+
+	defaultCurveBrightness, defaultCurveKelvin := b.app.GetDefaultCurve()
+	if defaultCurveBrightness != nil {
+		brightness = *defaultCurveBrightness
+	}
+
+	if defaultCurveKelvin != nil {
+		kelvin = *defaultCurveKelvin
+	}
+
+	groupCurveBrightness, groupCurveKelvin := b.app.GetGroupCurve(b.Group)
+	if groupCurveBrightness != nil {
+		brightness = *groupCurveBrightness
+	}
+
+	if groupCurveKelvin != nil {
+		kelvin = *groupCurveKelvin
 	}
 
 	if b.ManualStateUntil.After(time.Now()) {
 		le := log.WithFields(log.Fields{
 			"name":    b.Name,
 			"address": b.Address,
+			"until":   b.ManualStateUntil,
+			"for":     b.ManualStateUntil.Sub(time.Now()),
 		})
 		if b.ManualStateKelvin != nil {
 			kelvin = *b.ManualStateKelvin
@@ -169,6 +127,7 @@ func (b *Bulb) adjustState() {
 			"current-kelvin":     state.Kelvin,
 			"target-kelvin":      kelvin,
 			"name":               b.Name,
+			"group":              b.Group,
 			"address":            b.Address,
 		}).Info("initiating LightColor change")
 		b.Controlled = false
