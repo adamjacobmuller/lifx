@@ -39,9 +39,11 @@ func RunWebServer(a *App) {
 		next(rw, req)
 	})
 
+	router.Get("/curves", (*Context).ListCurves)
 	router.Get("/bulbs", (*Context).ListBulbs)
 	router.Get("/bulbs/:*", (*Context).ListBulbs)
 	router.Post("/bulbs/:*", (*Context).UpdateBulbs)
+	router.Delete("/bulbs/:*", (*Context).ReleaseBulbs)
 	router.Get("/bulb/:bulb_id", (*Context).GetBulb)
 	router.Post("/bulb/:bulb_id", (*Context).UpdateBulb)
 
@@ -93,6 +95,24 @@ func ParseUpdateBulbRequest(ur *UpdateBulbRequest) (*time.Time, *time.Duration, 
 	}
 
 	return until, duration, brightness, kelvin, nil
+}
+
+func (c *Context) ReleaseBulbs(rw web.ResponseWriter, req *web.Request) {
+	bulbs, err := c.filter(req.PathParams["*"])
+	if err != nil {
+		http.Error(rw, err.Error(), 400)
+	}
+
+	for _, bulb := range bulbs {
+		le := log.WithFields(log.Fields{
+			"address": bulb.Address,
+			"name":    bulb.Name,
+		})
+		bulb.ManualStateUntil = time.Now()
+		bulb.ManualStateBrightness = nil
+		bulb.ManualStateKelvin = nil
+		le.Info("releasing bulb from manual control")
+	}
 }
 
 func (c *Context) UpdateBulbs(rw web.ResponseWriter, req *web.Request) {
@@ -204,6 +224,15 @@ func (c *Context) GetBulb(rw web.ResponseWriter, req *web.Request) {
 		}
 	}
 	http.Error(rw, "no such bulb", 404)
+}
+
+func (c *Context) ListCurves(rw web.ResponseWriter, req *web.Request) {
+	d, err := json.Marshal(c.App.curves)
+	if err != nil {
+		panic(err)
+	}
+	rw.Header().Add("content-type", "application/json")
+	rw.Write(d)
 }
 
 func (c *Context) ListBulbs(rw web.ResponseWriter, req *web.Request) {
