@@ -111,6 +111,7 @@ func (c *Context) ReleaseBulbs(rw web.ResponseWriter, req *web.Request) {
 		bulb.ManualStateUntil = time.Now()
 		bulb.ManualStateBrightness = nil
 		bulb.ManualStateKelvin = nil
+		bulb.Controlled = true
 		le.Info("releasing bulb from manual control")
 	}
 }
