@@ -1,0 +1,103 @@
+{
+    "groups": [
+        "Back Door"
+    ],
+    "hours": {
+        "0": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "1": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "2": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "3": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "4": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "5": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "6": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "7": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "8": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "9": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "10": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "11": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "12": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "13": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "14": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "15": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "16": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "17": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "18": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "19": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "20": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "21": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "22": {
+            "brightness": 65535,
+            "kelvin": 5000
+        },
+        "23": {
+            "brightness": 65535,
+            "kelvin": 5000
+        }
+    }
+}
