@@ -103,7 +103,7 @@ func (b *Bulb) adjustState() {
 			brightness = *b.ManualStateBrightness
 			le.WithField("brightness", brightness)
 		}
-		le.Info("manually controlling state")
+		le.Debug("manually controlling state")
 	} else {
 		log.WithFields(log.Fields{
 			"name":             b.Name,
