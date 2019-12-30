@@ -139,19 +139,19 @@ func (c *Context) UpdateBulbs(rw web.ResponseWriter, req *web.Request) {
 			"name":    bulb.Name,
 		})
 		bulb.ManualStateUntil = *until
-		le = le.WithField("until", ur.Until)
+		le = le.WithField("until", *until)
 		if duration != nil {
-			le = le.WithField("duration", duration)
+			le = le.WithField("duration", *duration)
 		}
 		bulb.ManualStateBrightness = nil
 		bulb.ManualStateKelvin = nil
 		if brightness != nil {
 			bulb.ManualStateBrightness = brightness
-			le = le.WithField("brightness", brightness)
+			le = le.WithField("brightness", *brightness)
 		}
 		if kelvin != nil {
 			bulb.ManualStateKelvin = kelvin
-			le = le.WithField("kelvin", kelvin)
+			le = le.WithField("kelvin", *kelvin)
 		}
 		le.Info("setting bulb to manual control")
 	}
