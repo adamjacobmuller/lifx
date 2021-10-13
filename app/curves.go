@@ -69,14 +69,14 @@ func (a *App) loadCurves() error {
 	curves := &Curves{}
 	curves.Groups = make(map[string]*Curve)
 
-	defaultCurve, err := loadCurve("/home/adam/curves/default.json")
+	defaultCurve, err := loadCurve("curves/default.json")
 	if err != nil {
 		return err
 	}
 
 	curves.Default = defaultCurve
 
-	groupCurveFiles, err := filepath.Glob("/home/adam/curves/groups/*.json")
+	groupCurveFiles, err := filepath.Glob("curves/groups/*.json")
 	if err != nil {
 		return err
 	}
