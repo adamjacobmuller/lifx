@@ -479,6 +479,7 @@ func (c *Client) processCommandEvent(cmde *cmdEvent) {
 
 		bulb.bulbState = newBulbState(cmd.Payload.Hue, cmd.Payload.Saturation, cmd.Payload.Brightness, cmd.Payload.Kelvin, cmd.Payload.Dim, cmd.Payload.Power, true)
 
+		go c.notifySubsBulbNew(bulb)
 		//c.addBulb(bulb)
 
 	case *powerStateCommand:
