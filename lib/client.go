@@ -3,7 +3,7 @@ package lifx
 import (
 	"bytes"
 	"fmt"
-	"log"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"reflect"
 	"sync"
@@ -479,10 +479,7 @@ func (c *Client) processCommandEvent(cmde *cmdEvent) {
 
 		bulb.bulbState = newBulbState(cmd.Payload.Hue, cmd.Payload.Saturation, cmd.Payload.Brightness, cmd.Payload.Kelvin, cmd.Payload.Dim, cmd.Payload.Power, true)
 
-		c.GetGroup(bulb)
-		c.GetLocation(bulb)
-		c.GetAmbientLight(bulb)
-		c.addBulb(bulb)
+		//c.addBulb(bulb)
 
 	case *powerStateCommand:
 		c.updateBulbPowerState(cmd.Header.TargetMacAddress, cmd.Payload.OnOff)
@@ -605,8 +602,14 @@ func (c *Client) GetBulb(lifxAddress [6]byte) *Bulb {
 			return b
 		}
 	}
-	return newBulb(lifxAddress)
+	bulb := newBulb(lifxAddress)
+	c.bulbs = append(c.bulbs, bulb)
 
+	c.GetGroup(bulb)
+	c.GetLocation(bulb)
+	c.GetAmbientLight(bulb)
+
+	return bulb
 }
 
 func (c *Client) updateLocation(lifxAddress [6]byte, location [32]byte) {
