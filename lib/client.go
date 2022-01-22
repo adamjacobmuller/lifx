@@ -200,7 +200,7 @@ func (g *Gateway) sendTo(cmd command) error {
 		return err
 	}
 
-	//log.Printf("Sent command to gateway %s", reflect.TypeOf(cmd))
+	log.Printf("Sent command to gateway %s", reflect.TypeOf(cmd))
 
 	return nil
 }
