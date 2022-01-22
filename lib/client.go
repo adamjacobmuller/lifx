@@ -576,11 +576,11 @@ func (c *Client) addBulb(bulb *Bulb) {
 		// notify subscribers
 	}
 	go c.notifySubsBulbNew(bulb)
-	for _, lbulb := range c.bulbs {
-		if bulb.LifxAddress == lbulb.LifxAddress {
-			lbulb.update(bulb)
-		}
-	}
+	//for _, lbulb := range c.bulbs {
+	//	if bulb.LifxAddress == lbulb.LifxAddress {
+	//		lbulb.update(bulb)
+	//	}
+	//}
 }
 
 func (c *Client) updateBulbPowerState(lifxAddress [6]byte, onoff uint16) {
