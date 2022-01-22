@@ -602,12 +602,14 @@ func (c *Client) GetBulb(lifxAddress [6]byte) *Bulb {
 			return b
 		}
 	}
+
 	bulb := newBulb(lifxAddress)
-	c.bulbs = append(c.bulbs, bulb)
 
 	c.GetGroup(bulb)
 	c.GetLocation(bulb)
 	c.GetAmbientLight(bulb)
+
+	c.addBulb(bulb)
 
 	return bulb
 }
