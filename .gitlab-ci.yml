@@ -8,6 +8,4 @@ build:
   image: gitlab-registry.adam.gs/sites/kubernetes-deploy:master
   stage: build
   script:
-    - find /builds
-    - pwd
     - build
