@@ -121,6 +121,7 @@ func (b *Bulb) adjustState() {
 		update = true
 	}
 	if update {
+		controlAfter := time.Now().Add(time.Second * 15)
 		log.WithFields(log.Fields{
 			"current-brightness": state.Brightness,
 			"target-brightness":  brightness,
@@ -129,9 +130,10 @@ func (b *Bulb) adjustState() {
 			"name":               b.Name,
 			"group":              b.Group,
 			"address":            b.Address,
+			"control-after":      controlAfter,
 		}).Info("initiating LightColor change")
 		b.Controlled = false
-		b.ControlAfter = time.Now().Add(time.Second * 15)
+		b.ControlAfter = controlAfter
 		b.TargetState.Kelvin = kelvin
 		b.TargetState.Brightness = brightness
 		b.client.LightColour(b.bulb, hue, sat, brightness, kelvin, timing)

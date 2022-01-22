@@ -165,9 +165,10 @@ func (a *App) regainControl() {
 			}
 			if bulb.ControlAfter.Before(time.Now()) {
 				log.WithFields(log.Fields{
-					"address": bulb.Address,
-					"name":    bulb.Name,
-					"after":   time.Since(bulb.ControlAfter),
+					"address":       bulb.Address,
+					"name":          bulb.Name,
+					"after":         time.Since(bulb.ControlAfter),
+					"control-after": bulb.ControlAfter,
 				}).Info("regaining control of bulb")
 				bulb.Controlled = true
 				bulb.adjustState()

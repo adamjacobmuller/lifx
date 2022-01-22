@@ -1,0 +1,11 @@
+stages:
+  - build
+
+services:
+  - docker:dind
+
+build:
+  image: gitlab-registry.adam.gs/sites/kubernetes-deploy:master
+  stage: build
+  script:
+    - build
