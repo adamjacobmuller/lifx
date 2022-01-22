@@ -389,6 +389,10 @@ func (c *Client) Tags() map[uint64][]byte {
 }
 
 func (c *Client) sendTo(bulb *Bulb, cmd command) error {
+	log.WithFields(log.Fields{
+		"bulb": bulb,
+		"cmd":  cmd,
+	}).Info("sending command")
 	cmd.SetLifxAddr(bulb.LifxAddress) // ensure the message is addressed to the correct bulb
 
 	for _, gw := range c.gateways {
