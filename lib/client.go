@@ -333,28 +333,28 @@ func (c *Client) GetBulbs() []*Bulb {
 
 // GetBulbState send a notification to the bulb to emit it's current state
 func (c *Client) GetBulbState(bulb *Bulb) error {
-	//log.Printf("GetBulbState sent to %s", bulb.GetLifxAddress())
+	log.Printf("GetBulbState sent to %s", bulb.GetLifxAddress())
 	cmd := newGetLightStateCommandFromBulb(bulb.LifxAddress)
 	return c.sendTo(bulb, cmd)
 }
 
 // GetLocation send a notification to the bulb to emit the current location
 func (c *Client) GetLocation(bulb *Bulb) error {
-	//log.Printf("GetLocation sent to %s", bulb.GetLifxAddress())
+	log.Printf("GetLocation sent to %s", bulb.GetLifxAddress())
 	cmd := newGetLocationCommandFromBulb(bulb.LifxAddress)
 	return c.sendTo(bulb, cmd)
 }
 
 // GetGroup send a notification to the bulb to emit the current group
 func (c *Client) GetGroup(bulb *Bulb) error {
-	//log.Printf("GetGroup sent to %s", bulb.GetLifxAddress())
+	log.Printf("GetGroup sent to %s", bulb.GetLifxAddress())
 	cmd := newGetGroupCommandFromBulb(bulb.LifxAddress)
 	return c.sendTo(bulb, cmd)
 }
 
 // GetAmbientLight send a notification to the bulb to emit the current ambient light
 func (c *Client) GetAmbientLight(bulb *Bulb) error {
-	//log.Printf("GetAmbientLight sent to %s", bulb.GetLifxAddress())
+	log.Printf("GetAmbientLight sent to %s", bulb.GetLifxAddress())
 	cmd := newGetAmbientLightCommandFromBulb(bulb.LifxAddress)
 	return c.sendTo(bulb, cmd)
 }
