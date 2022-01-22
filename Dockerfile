@@ -1,10 +1,10 @@
 FROM golang:1.17 as builder
 WORKDIR /root/lifx
+COPY cmd cmd
 COPY lib lib
 COPY app app
-COPY cmd cmd
 COPY go.mod go.sum /root/lifx/
-RUN GOOS=linux go build -o lifx cmd/lifx/main.go
+RUN go build -o lifx cmd/lifx/main.go
 
 FROM debian:11
 WORKDIR /root/
