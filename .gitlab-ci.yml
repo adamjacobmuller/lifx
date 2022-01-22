@@ -8,5 +8,5 @@ build:
   image: gitlab-registry.adam.gs/sites/kubernetes-deploy:master
   stage: build
   script:
-    - find /cache -ls
+    - find /cache
     - build
