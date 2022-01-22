@@ -155,6 +155,7 @@ type Gateway struct {
 	Port        uint16
 	Site        [6]byte // incoming messages are desimanated by site
 	lastSeen    time.Time
+	Socket      *net.UDPConn
 }
 
 // GetLifxAddress returns the unique lifx address of the gateway
@@ -168,39 +169,36 @@ func (g *Gateway) GetSite() string {
 }
 
 func newGateway(lifxAddress [6]byte, hostAddress string, port uint16, site [6]byte) *Gateway {
-	return &Gateway{
-		lifxAddress: lifxAddress,
-		hostAddress: hostAddress,
-		Port:        port,
-		Site:        site,
-	}
-}
-
-func (g *Gateway) sendTo(cmd command) error {
 	// can we connect to the gw
-	addr, err := net.ResolveUDPAddr("udp4", g.hostAddress)
+	addr, err := net.ResolveUDPAddr("udp4", hostAddress)
 
 	if err != nil {
-		return err
+		return nil
 	}
 
 	// open the connection, which we retain for all peer -> globe comms
 	socket, err := net.DialUDP("udp4", nil, addr)
 
 	if err != nil {
-		return err
+		return nil
 	}
+	return &Gateway{
+		lifxAddress: lifxAddress,
+		hostAddress: hostAddress,
+		Port:        port,
+		Site:        site,
+		Socket:      socket,
+	}
+}
 
-	defer socket.Close()
-
-	// send to globe
-	_, err = cmd.WriteTo(socket)
+func (g *Gateway) sendTo(cmd command) error {
+	_, err := cmd.WriteTo(g.Socket)
 
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Sent command to gateway %s", reflect.TypeOf(cmd))
+	//log.Printf("Sent command to gateway %s: %s", g.hostAddress, reflect.TypeOf(cmd))
 
 	return nil
 }
@@ -215,13 +213,15 @@ func (g *Gateway) findBulbs() error {
 		return err
 	}
 
-	tcmd := newGetTagsCommand(g.Site)
+	/*
+		tcmd := newGetTagsCommand(g.Site)
 
-	err = g.sendTo(tcmd)
+		err = g.sendTo(tcmd)
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
+	*/
 
 	return nil
 }
@@ -392,7 +392,7 @@ func (c *Client) sendTo(bulb *Bulb, cmd command) error {
 	log.WithFields(log.Fields{
 		"bulb": bulb,
 		"cmd":  cmd,
-	}).Info("sending command")
+	}).Debug("sending command")
 	cmd.SetLifxAddr(bulb.LifxAddress) // ensure the message is addressed to the correct bulb
 
 	for _, gw := range c.gateways {
