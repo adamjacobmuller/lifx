@@ -4,4 +4,4 @@ include:
     file: gitlab-ci/deploy.yml
 variables:
   KUBE_CONTEXT: home/mini:mini
-  KUBE_NAMESPACE: infinity2influx
+  KUBE_NAMESPACE: lifx
