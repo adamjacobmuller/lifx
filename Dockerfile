@@ -1,4 +1,4 @@
-FROM golang:1.17 as builder
+FROM docker.io/golang:1.17 as builder
 WORKDIR /root/lifx
 COPY cmd cmd
 COPY lib lib
@@ -6,7 +6,7 @@ COPY app app
 COPY go.mod go.sum /root/lifx/
 RUN go build -o lifx cmd/lifx/main.go
 
-FROM debian:11
+FROM docker.io/debian:11
 WORKDIR /root/
 COPY --from=builder /root/lifx/lifx .
 COPY curves curves
