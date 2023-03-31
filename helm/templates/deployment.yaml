@@ -29,6 +29,9 @@ spec:
       hostNetwork: true
       containers:
         - name: {{ .Chart.Name }}
+          env:
+          - name: TZ
+            value: America/New_York
           ports:
           - containerPort: 8089
             name: http
