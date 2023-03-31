@@ -26,17 +26,19 @@ spec:
       serviceAccountName: {{ include "helm.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      hostNetwork: true
       containers:
         - name: {{ .Chart.Name }}
-          hostNetwork: true
           ports:
           - containerPort: 8089
             name: http
             protocol: TCP
           - containerPort: 56700
+            hostPort: 56700
             name: peer
             protocol: UDP
           - containerPort: 56750
+            hostPort: 56750
             name: broadcast
             protocol: UDP
           securityContext:
