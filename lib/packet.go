@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"io"
 	"log"
+	"net"
 )
 
 const (
@@ -92,6 +93,20 @@ func (p *packetHeader) Encode(wr io.Writer) (int, error) {
 	//log.Printf("encode % x", buf.Bytes())
 
 	return wr.Write(buf.Bytes())
+}
+
+func (p *packetHeader) EncodeToUDP(wr *net.UDPConn, addr *net.UDPAddr) (int, error) {
+	buf := new(bytes.Buffer)
+
+	err := binary.Write(buf, binary.LittleEndian, p)
+
+	if err != nil {
+		log.Fatalf("Woops %s", err)
+	}
+
+	//log.Printf("encode % x", buf.Bytes())
+
+	return wr.WriteToUDP(buf.Bytes(), addr)
 }
 
 func decodePayload(buf []byte, payload interface{}) error {

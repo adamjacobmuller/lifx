@@ -4,7 +4,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"gitlab.adam.gs/home/lifx/lib"
+	lifx "gitlab.adam.gs/home/lifx/lib"
 )
 
 type App struct {
@@ -14,7 +14,7 @@ type App struct {
 }
 
 func (a *App) watchOffline() {
-	for _ = range time.Tick(time.Second) {
+	for range time.Tick(time.Second) {
 		for _, bulb := range a.bulbs {
 			since := time.Since(bulb.bulb.LastSeen())
 			if since > time.Hour {

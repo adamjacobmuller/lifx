@@ -3,11 +3,12 @@ package lifx
 import (
 	"bytes"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net"
 	"reflect"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -150,6 +151,7 @@ func (l *LightSensorState) GetLifxAddress() string {
 
 // Gateway Lifx bulb which is acting as a gateway to the mesh
 type Gateway struct {
+	client      *Client
 	lifxAddress [6]byte
 	hostAddress string
 	Port        uint16
@@ -168,7 +170,9 @@ func (g *Gateway) GetSite() string {
 	return fmt.Sprintf("%x", g.Site)
 }
 
-func newGateway(lifxAddress [6]byte, hostAddress string, port uint16, site [6]byte) *Gateway {
+func newGateway(client *Client, lifxAddress [6]byte, hostAddress string, port uint16, site [6]byte) *Gateway {
+	buf := make([]byte, 1024)
+
 	// can we connect to the gw
 	addr, err := net.ResolveUDPAddr("udp4", hostAddress)
 
@@ -182,6 +186,34 @@ func newGateway(lifxAddress [6]byte, hostAddress string, port uint16, site [6]by
 	if err != nil {
 		return nil
 	}
+
+	go func() {
+		for {
+			n, addr, err := socket.ReadFrom(buf)
+
+			if err != nil {
+				log.Fatalf("Woops %s", err)
+			}
+
+			//log.Printf("Received buffer from %+v of %x", addr, buf[:n])
+
+			cmd, err := decodeCommand(buf[:n])
+
+			if err != nil {
+				//log.Printf("Error processing command: %v", err)
+				continue
+			}
+			//log.Printf("Recieved command: %s", reflect.TypeOf(cmd))
+
+			// dispatch a cmdEvent
+			client.commandCh <- &cmdEvent{
+				addr,
+				cmd,
+			}
+
+		}
+	}()
+
 	return &Gateway{
 		lifxAddress: lifxAddress,
 		hostAddress: hostAddress,
@@ -280,7 +312,6 @@ func (c *Client) StartDiscovery() (err error) {
 		}
 
 	}()
-
 	return
 }
 
@@ -468,11 +499,12 @@ func (c *Client) readCommands() {
 
 func (c *Client) processCommandEvent(cmde *cmdEvent) {
 	// a read from ch has occurred
+
 	switch cmd := cmde.cmd.(type) {
 	case *panGatewayCommand:
 		// found a gw
 		if cmd.Payload.Service == 1 {
-			gw := newGateway(cmd.Header.TargetMacAddress, cmde.addr.String(), cmd.Payload.Port, cmd.Header.Site)
+			gw := newGateway(c, cmd.Header.TargetMacAddress, cmde.addr.String(), cmd.Payload.Port, cmd.Header.Site)
 			c.addGateway(gw)
 		}
 
@@ -529,19 +561,13 @@ func (c *Client) checkExpired() {
 func (c *Client) sendDiscovery(t time.Time) {
 	//log.Println("Discovery packet sent at", t)
 
-	socket, err := net.DialUDP("udp4", nil, &net.UDPAddr{
+	remoteAddr := &net.UDPAddr{
 		IP:   net.IPv4(255, 255, 255, 255),
 		Port: BroadcastPort,
-	})
-
-	if err != nil {
-		return
 	}
 
-	defer socket.Close()
-
 	p := newPacketHeader(PktGetPANgateway)
-	_, _ = p.Encode(socket)
+	_, _ = p.EncodeToUDP(c.bcastSocket, remoteAddr)
 
 	//log.Printf("Bcast sent %d", n)
 
@@ -552,7 +578,7 @@ func (c *Client) sendDiscovery(t time.Time) {
 
 func (c *Client) addGateway(gw *Gateway) {
 	if !gatewayInSlice(gw, c.gateways) {
-		//log.Printf("Added gw %v", gw)
+		log.Printf("Added gw %v", gw)
 		gw.lastSeen = time.Now()
 		c.gateways = append(c.gateways, gw)
 
