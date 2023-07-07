@@ -32,18 +32,18 @@ spec:
           env:
           - name: TZ
             value: America/New_York
-          ports:
-          - containerPort: 8089
-            name: http
-            protocol: TCP
-          - containerPort: 56700
-            hostPort: 56700
-            name: peer
-            protocol: UDP
-          - containerPort: 56750
-            hostPort: 56750
-            name: broadcast
-            protocol: UDP
+          #ports:
+          #- containerPort: 8089
+          #  name: http
+          #  protocol: TCP
+          #- containerPort: 56700
+          #  hostPort: 56700
+          #  name: peer
+          #  protocol: UDP
+          #- containerPort: 56750
+          #  hostPort: 56750
+          #  name: broadcast
+          #  protocol: UDP
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
